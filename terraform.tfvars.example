@@ -1,0 +1,33 @@
+project_name  = "aiops"
+environment   = "workshop"
+aws_region    = "us-east-1"
+aws_profile   = null
+
+vpc_cidr             = "10.20.0.0/16"
+azs                  = []
+private_subnet_cidrs = ["10.20.11.0/24", "10.20.12.0/24"]
+enable_vpc_endpoints = true
+
+eks_cluster_name        = ""
+eks_kubernetes_version  = "1.36"
+eks_node_instance_types = ["t3.medium"]
+eks_node_desired_size   = 1
+eks_node_min_size       = 1
+eks_node_max_size       = 2
+mcp_kubernetes_namespace = "application"
+
+container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/aiops-mcp-server:latest"
+container_image_repository_arn = "arn:aws:ecr:us-east-1:123456789012:repository/aiops-mcp-server"
+container_port = 8080
+ecs_cpu = 256
+ecs_memory = 512
+ecs_desired_count = 1
+mcp_health_check_path = "/health"
+log_retention_days = 7
+
+task_execution_role_name = null
+task_role_name           = null
+
+tags = {
+  Owner = "platform-workshop"
+}

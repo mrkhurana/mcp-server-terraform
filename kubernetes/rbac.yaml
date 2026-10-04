@@ -1,0 +1,53 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: aiops-mcp-investigate
+  namespace: application
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "services"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: aiops-mcp-remediate
+  namespace: application
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: aiops-mcp-investigate-binding
+  namespace: application
+subjects:
+  - kind: Group
+    name: aiops-mcp-investigate
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: aiops-mcp-investigate
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: aiops-mcp-remediate-binding
+  namespace: application
+subjects:
+  - kind: Group
+    name: aiops-mcp-remediate
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: aiops-mcp-remediate
+  apiGroup: rbac.authorization.k8s.io
