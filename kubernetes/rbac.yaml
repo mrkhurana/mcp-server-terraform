@@ -1,3 +1,5 @@
+# Least-privilege RBAC for the AI Ops MCP server, bound to the Kubernetes groups that the
+# ECS task role's EKS access entry maps to. Namespace-scoped: nothing outside "application".
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -5,11 +7,14 @@ metadata:
   namespace: application
 rules:
   - apiGroups: [""]
-    resources: ["pods", "pods/log", "events", "services"]
-    verbs: ["get", "list", "watch"]
+    resources: ["pods", "pods/log", "events", "services", "endpoints"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["services/proxy"]   # check_app_health: HTTP GET through the API server
+    verbs: ["get"]
   - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["get", "list", "watch"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -18,11 +23,14 @@ metadata:
   namespace: application
 rules:
   - apiGroups: [""]
-    resources: ["pods"]
+    resources: ["pods"]              # restart_pod
     verbs: ["delete"]
   - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["update", "patch"]
+    resources: ["deployments/scale"] # scale_deployment
+    verbs: ["get", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]       # rollout restart, rollback, resources, set_image
+    verbs: ["patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

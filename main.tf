@@ -35,6 +35,9 @@ module "ecs" {
   desired_count                  = var.ecs_desired_count
   health_check_path              = var.mcp_health_check_path
   mcp_kubernetes_namespace       = var.mcp_kubernetes_namespace
+  mcp_workload_ecr_repositories  = var.mcp_workload_ecr_repositories
+  mcp_allowed_deployments        = var.mcp_allowed_deployments
+  mcp_enable_remediation         = var.mcp_enable_remediation
   log_retention_days             = var.log_retention_days
   task_execution_role_name       = var.task_execution_role_name
   task_role_name                 = var.task_role_name

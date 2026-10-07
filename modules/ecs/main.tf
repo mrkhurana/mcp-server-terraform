@@ -1,5 +1,26 @@
 locals {
-  name = "${var.project_name}-${var.environment}"
+  name         = "${var.project_name}-${var.environment}"
+  ecr_registry = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+  workload_repository_arns = [
+    for repo in var.mcp_workload_ecr_repositories :
+    "arn:${data.aws_partition.current.partition}:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${repo}"
+  ]
+}
+
+# Bearer token clients must send to /mcp. Stored as an SSM SecureString (the VPC already has an
+# ssm endpoint) and injected into the container as MCP_AUTH_TOKEN. It is also kept in Terraform state.
+resource "random_password" "mcp_auth_token" {
+  length  = 48
+  special = false
+}
+
+resource "aws_ssm_parameter" "mcp_auth_token" {
+  name        = "/${local.name}/mcp-auth-token"
+  description = "Bearer token for the AI Ops MCP endpoint."
+  type        = "SecureString"
+  value       = random_password.mcp_auth_token.result
+
+  tags = var.tags
 }
 
 data "aws_caller_identity" "current" {}
@@ -181,6 +202,11 @@ resource "aws_iam_role_policy" "execution" {
         Effect   = "Allow"
         Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.this.arn}:*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameters"]
+        Resource = aws_ssm_parameter.mcp_auth_token.arn
       }
     ]
   })
@@ -215,6 +241,21 @@ resource "aws_iam_role_policy" "task_eks_describe" {
   })
 }
 
+resource "aws_iam_role_policy" "task_ecr_read" {
+  count = length(var.mcp_workload_ecr_repositories) > 0 ? 1 : 0
+  name  = "${local.name}-ecr-read"
+  role  = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ecr:DescribeRepositories", "ecr:DescribeImages"]
+      Resource = local.workload_repository_arns
+    }]
+  })
+}
+
 resource "aws_ecs_task_definition" "this" {
   family                   = local.name
   requires_compatibilities = ["FARGATE"]
@@ -242,7 +283,19 @@ resource "aws_ecs_task_definition" "this" {
         { name = "ALLOWED_NAMESPACES", value = var.mcp_kubernetes_namespace },
         { name = "K8S_NAMESPACE_ALLOWLIST", value = var.mcp_kubernetes_namespace },
         { name = "MCP_ALLOWED_HOSTS", value = "${aws_lb.this.dns_name}:${var.container_port}" },
-        { name = "MCP_TRANSPORT", value = "streamable-http" }
+        { name = "MCP_TRANSPORT", value = "streamable-http" },
+        { name = "MCP_ENABLE_REMEDIATION", value = tostring(var.mcp_enable_remediation) },
+        { name = "MCP_ALLOWED_DEPLOYMENTS", value = join(",", var.mcp_allowed_deployments) },
+        { name = "MCP_MIN_REPLICAS", value = "1" },
+        { name = "MCP_MAX_REPLICAS", value = "5" },
+        { name = "MCP_ALLOWED_ECR_REPOSITORIES", value = join(",", var.mcp_workload_ecr_repositories) },
+        {
+          name  = "MCP_ALLOWED_IMAGE_PREFIXES"
+          value = join(",", [for repo in var.mcp_workload_ecr_repositories : "${local.ecr_registry}/${repo}"])
+        }
+      ]
+      secrets = [
+        { name = "MCP_AUTH_TOKEN", valueFrom = aws_ssm_parameter.mcp_auth_token.arn }
       ]
       logConfiguration = {
         logDriver = "awslogs"

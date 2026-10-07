@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.27-alpine
+          image: <ECR_REGISTRY>/nginx:1.27-alpine  # replaced by deploy.sh; mirrored by mcp-server-deployments/deploy.sh
           ports:
             - containerPort: 80
           readinessProbe:

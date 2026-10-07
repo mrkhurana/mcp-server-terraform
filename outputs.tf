@@ -67,3 +67,8 @@ output "eks_log_group_name" {
   description = "CloudWatch log group for EKS control plane logs."
   value       = module.eks.log_group_name
 }
+
+output "mcp_auth_token_parameter" {
+  description = "SSM SecureString parameter holding the MCP bearer token (read by mcp-client/deploy.sh)."
+  value       = module.ecs.auth_token_parameter_name
+}

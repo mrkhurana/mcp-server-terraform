@@ -73,22 +73,13 @@ resource "aws_vpc_security_group_ingress_rule" "mcp_to_eks_api" {
   to_port                      = 443
 }
 
+# ECS task role -> Kubernetes groups -> RoleBindings -> Roles in kubernetes/rbac.yaml (namespace-scoped).
+# No EKS access policy is associated, so the role has exactly the permissions rbac.yaml grants.
 resource "aws_eks_access_entry" "mcp_readonly" {
   cluster_name      = aws_eks_cluster.this.name
   principal_arn     = var.mcp_task_role_arn
   type              = "STANDARD"
-  kubernetes_groups = []
-}
-
-resource "aws_eks_access_policy_association" "mcp_view" {
-  cluster_name  = aws_eks_cluster.this.name
-  principal_arn = aws_eks_access_entry.mcp_readonly.principal_arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-
-  access_scope {
-    type       = "namespace"
-    namespaces = [var.mcp_namespace]
-  }
+  kubernetes_groups = ["aiops-mcp-investigate", "aiops-mcp-remediate"]
 }
 
 data "aws_caller_identity" "current" {}

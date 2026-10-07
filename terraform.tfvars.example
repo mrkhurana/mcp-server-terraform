@@ -16,6 +16,10 @@ eks_node_min_size       = 1
 eks_node_max_size       = 2
 mcp_kubernetes_namespace = "application"
 
+mcp_workload_ecr_repositories = ["nginx"]
+mcp_allowed_deployments       = ["nginx"]
+mcp_enable_remediation        = true
+
 container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/aiops-mcp-server:latest"
 container_image_repository_arn = "arn:aws:ecr:us-east-1:123456789012:repository/aiops-mcp-server"
 container_port = 8080

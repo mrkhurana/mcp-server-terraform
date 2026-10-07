@@ -14,6 +14,8 @@ if [[ ! -f terraform.tfvars ]]; then
 fi
 
 REGION="${AWS_REGION:-$(awk -F'=' '/^aws_region/ {gsub(/[" ]/, "", $2); print $2}' terraform.tfvars)}"
+# Private ECR registry (account.dkr.ecr.region.amazonaws.com), taken from the MCP image in terraform.tfvars.
+ECR_REGISTRY="$(awk -F'=' '/^container_image[ ]/ {gsub(/[" ]/, "", $2); print $2}' terraform.tfvars | cut -d'/' -f1)"
 
 terraform init
 terraform apply -auto-approve
@@ -23,7 +25,7 @@ aws eks update-kubeconfig --region "$REGION" --name "$CLUSTER_NAME"
 
 kubectl apply -f kubernetes/namespace.yaml
 kubectl apply -f kubernetes/rbac.yaml
-kubectl apply -f kubernetes/nginx.yaml
+sed "s|<ECR_REGISTRY>|${ECR_REGISTRY}|g" kubernetes/nginx.yaml | kubectl apply -f -
 kubectl -n application rollout status deployment/nginx --timeout=180s
 
 kubectl get nodes

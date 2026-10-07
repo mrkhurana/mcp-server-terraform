@@ -99,6 +99,24 @@ variable "mcp_kubernetes_namespace" {
   type        = string
 }
 
+variable "mcp_workload_ecr_repositories" {
+  description = "ECR repository names whose images the MCP server may deploy and list."
+  type        = list(string)
+  default     = []
+}
+
+variable "mcp_allowed_deployments" {
+  description = "Deployments the MCP server may change; empty allows all in the namespace."
+  type        = list(string)
+  default     = []
+}
+
+variable "mcp_enable_remediation" {
+  description = "Whether state-changing MCP tools are enabled."
+  type        = bool
+  default     = true
+}
+
 variable "log_retention_days" {
   description = "CloudWatch log retention period."
   type        = number

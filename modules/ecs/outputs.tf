@@ -42,3 +42,8 @@ output "log_group_name" {
   description = "CloudWatch log group for MCP tasks."
   value       = aws_cloudwatch_log_group.this.name
 }
+
+output "auth_token_parameter_name" {
+  description = "SSM SecureString parameter holding the MCP bearer token."
+  value       = aws_ssm_parameter.mcp_auth_token.name
+}

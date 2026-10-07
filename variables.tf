@@ -110,6 +110,24 @@ variable "mcp_kubernetes_namespace" {
   default     = "application"
 }
 
+variable "mcp_workload_ecr_repositories" {
+  description = "ECR repositories (names) whose images the MCP server may deploy with set_image and list with list_image_tags."
+  type        = list(string)
+  default     = ["nginx"]
+}
+
+variable "mcp_allowed_deployments" {
+  description = "Deployments the MCP server may change. Empty allows every deployment in the namespace."
+  type        = list(string)
+  default     = ["nginx"]
+}
+
+variable "mcp_enable_remediation" {
+  description = "Set false to make every state-changing MCP tool refuse (read-only mode)."
+  type        = bool
+  default     = true
+}
+
 variable "container_port" {
   description = "Private MCP security-group port reserved for the future ECS task."
   type        = number
